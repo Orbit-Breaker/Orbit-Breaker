@@ -1,0 +1,2762 @@
+<!doctype html>
+<html lang="en">
+
+
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Orbit Breaker — Minimal Canvas Game</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+
+        html,
+        body {
+            height: 100%;
+            background: linear-gradient(to right, #0f0c29, #302b63, #24243e);
+            color: #fff;
+            line-height: 1.6;
+        }
+
+        .stars {
+            position: fixed;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAoAAAAKCAYAAACNMs+9AAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAyBpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDUuMC1jMDYwIDYxLjEzNDc3NywgMjAxMC8wMi8xMi0xNzozMjowMCAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvIiB4bWxuczp4bXBNTT0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wL21tLyIgeG1sbnM6c3RSZWY9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZVJlZiMiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIENTNSBXaW5kb3dzIiB4bXBNTTpJbnN0YW5jZUlEPSJ4bXAuaWlkOjU1NzZGREYzOTk1NjExRTQ5RjYxQTM4QzExOTRBOTY5IiB4bXBNTTpEb2N1bWVudElEPSJ4bXAuZGlkOjU1NzZGREY0OTk1NjExRTQ5RjYxQTM4QzExOTRBOTY5Ij4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6NTU3NkZERjE5OTU2MTFFNDlGNjFBMzhDMTE5NEE5NjkiIHN0UmVmOmRvY3VtZW50SUQ9InhtcC5kaWQ6NTU3NkZERjI5OTU2MTFFNDlGNjFBMzhDMTE5NEE5NjkiLz4gPC9yZGY6RGVzY3JpcHRpb24+IDwvcmRmOlJERj4gPC94OnhtcG1ldGE+IDw/eHBhY2tldCBlbmQ9InIiPz7oBP9/AAAAK0lEQVR42mJkYGBgYMACmBhQASMDDsDIwAiigQJMDAyM2BXCBEAKsQIAAgwAJl4GG5L6H24AAAAASUVORK5CYII=') repeat;
+            animation: animateStars 50s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes animateStars {
+            from {
+                background-position: 0 0;
+            }
+            to {
+                background-position: 0 1000px;
+            }
+        }
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px #00ff99, 0 0 20px #00ff99, 0 0 30px #00ff99;
+            }
+            to {
+                text-shadow: 0 0 20px #00ff99, 0 0 30px #00ff99, 0 0 40px #00ff99;
+            }
+        }
+
+
+         #game {
+              display: block;
+              margin: 0 auto;
+              background: #071025;
+              border: 4px solid #123;
+              color: #fff;
+              image-rendering: pixelated
+         }
+
+
+         .hud {
+              position: fixed;
+              left: 18px;
+              top: 18px;
+              font-weight: 600;
+              letter-spacing: .4px;
+              font-size: 13px;
+              white-space: pre-line;
+              max-width: 420px;
+              line-height: 1.12
+         }
+
+
+         .hint {
+              position: fixed;
+              right: 18px;
+              top: 18px;
+              font-size: 13px;
+              text-align: right;
+         }
+
+
+         footer {
+              position: fixed;
+              left: 18px;
+              bottom: 18px;
+              font-size: 12px;
+              opacity: .7
+         }
+
+
+         /* overlays */
+         .overlay {
+              position: fixed;
+              left: 0;
+              top: 0;
+              width: 100%;
+              height: 100%;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              background: rgba(15, 12, 41, 0.8);
+              backdrop-filter: blur(8px);
+              z-index: 999;
+         }
+
+
+         .overlay.hidden {
+              display: none
+         }
+
+
+         .overlay .box {
+              background: rgba(255, 255, 255, 0.1);
+              border: 2px solid rgba(0, 255, 153, 0.3);
+              padding: 24px;
+              border-radius: 15px;
+              color: #fff;
+              max-width: 760px;
+              width: 88%;
+              box-shadow: 0 8px 30px rgba(0, 255, 153, 0.2);
+              backdrop-filter: blur(10px);
+         }
+
+
+         .overlay h1 {
+              margin: 0 0 8px 0;
+              font-size: 22px
+         }
+
+
+         .overlay p {
+              margin: 6px 0;
+              font-size: 14px
+         }
+
+
+         .btn {
+              display: inline-block;
+              padding: 12px 24px;
+              background: linear-gradient(45deg, #00ff99, #33ccff);
+              border-radius: 30px;
+              color: #fff;
+              margin: 8px 6px;
+              cursor: pointer;
+              font-weight: 600;
+              text-transform: uppercase;
+              transition: transform 0.3s, box-shadow 0.3s;
+         }
+
+         .btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 5px 20px rgba(0, 255, 153, 0.3);
+         }
+
+         .btn.secondary {
+              background: linear-gradient(45deg, #302b63, #24243e);
+              border: 1px solid rgba(0, 255, 153, 0.3);
+         }
+
+
+         .settings-list {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              margin-top: 8px;
+              max-height: 56vh;
+              overflow: auto;
+         }
+
+
+         .binding-row {
+              display: flex;
+              align-items: center;
+              justify-content: space-between;
+              padding: 8px;
+              background: rgba(255, 255, 255, 0.02);
+              border-radius: 6px
+         }
+
+
+         .binding-row .key {
+              min-width: 140px;
+              text-align: center
+         }
+    </style>
+</head>
+
+
+<body>
+    <div class="stars"></div>
+    <canvas id="game" width="800" height="520"></canvas>
+    <div class="hud" id="hud">Score: 0</div>
+
+    <!-- Overlays: Home / Instructions / Settings -->
+    <div id="overlay-home" class="overlay">
+         <div class="box">
+              <h1 class="game-title" style="font-size: 3rem; text-transform: uppercase; margin-bottom: 1rem; text-shadow: 0 0 10px #00ff99, 0 0 20px #00ff99, 0 0 30px #00ff99; animation: glow 2s ease-in-out infinite alternate;">Orbit Breaker</h1>
+              <p style="font-size: 1.2rem; margin-bottom: 1.5rem;">Break free from gravity's hold in this epic space adventure!</p>
+              <p style="margin-bottom: 1.5rem;">Navigate through treacherous asteroid fields, collect powerful upgrades, and challenge mighty bosses in this action-packed space shooter.</p>
+              <p style="margin-bottom: 1.5rem; opacity: 0.8;">Controller supported: PlayStation / standard gamepads. Use left stick or D-pad to move.</p>
+              <div style="display: flex; justify-content: center; gap: 1rem;">
+                   <button id="btn-start" class="btn">Start Game</button>
+                   <button id="btn-show-instructions" class="btn secondary">Show Instructions</button>
+              </div>
+         </div>
+    </div>
+
+
+
+
+    <div id="overlay-instructions" class="overlay hidden">
+         <div class="box">
+              <h1>How to Play</h1>
+              <p id="instr-text">Move: WASD or left stick<br>
+                   Shoot: Space or X / R2<br>
+                   Switch: Q or Triangle<br>
+                   Warp: E or Circle (if owned)<br>
+                   Settings: K (While paused)<br>
+                   Pause: Esc or Options<br>
+                   Press the button below when ready.</p>
+              <div>
+                   <button id="btn-instr-ok" class="btn">Got it — Play</button>
+              </div>
+         </div>
+    </div>
+
+
+
+
+    <div id="overlay-settings" class="overlay hidden">
+         <div class="box">
+              <h1>Keybinds</h1>
+              <div class="settings-list" id="settings-list"></div>
+              <p style="margin-top:10px;font-size:13px;opacity:0.9">Click a binding to rebind (press a key or press a
+                   controller button).</p>
+              <div style="margin-top:12px;text-align:right">
+                   <button id="btn-settings-close" class="btn secondary">Close</button>
+              </div>
+         </div>
+    </div>
+    <script>
+         (() => {
+              const canvas = document.getElementById('game');
+              const ctx = canvas.getContext('2d');
+              const W = canvas.width, H = canvas.height;
+
+
+
+
+
+
+
+
+              // input tracking
+              let keys = {};
+              let lastKeyDown = null; // for rebinding capture
+
+
+
+
+              // default bindings (action -> array of key strings)
+              const DEFAULT_BINDINGS = {
+                   moveUp: ['w'],
+                   moveDown: ['s'],
+                   moveLeft: ['a'],
+                   moveRight: ['d'],
+                   shoot: ['space'],
+                   warp: ['e'],
+                   pause: ['escape'],
+                   shop: ['b'],
+                   restart: ['r'],
+                   switch: ['q'],
+                   settings: ['k']
+              };
+
+
+
+
+              let bindings = loadBindings();
+
+
+
+
+              // simple gamepad state
+              let gpState = { axes: [], buttons: [] };
+
+
+
+
+              function loadBindings() {
+                   try {
+                        const raw = localStorage.getItem('orbitBindings');
+                        if (raw) return JSON.parse(raw);
+                   } catch (e) { }
+                   return JSON.parse(JSON.stringify(DEFAULT_BINDINGS));
+              }
+              function saveBindings() {
+                   try { localStorage.setItem('orbitBindings', JSON.stringify(bindings)); } catch (e) { }
+              }
+
+
+
+
+              function isKeyBoundToAction(key, action) {
+                   const arr = bindings[action] || [];
+                   return arr.indexOf(key) !== -1;
+              }
+
+
+
+
+              function isActionActive(action) {
+                   // keyboard & explicit gamepad-button bindings check
+                   const arr = bindings[action] || [];
+                   for (const k of arr) {
+                        if (k && typeof k === 'string') {
+                             if (k.indexOf('gpbtn') === 0) {
+                                  const idx = parseInt(k.slice(5), 10);
+                                  if (!Number.isNaN(idx) && gpState.buttons[idx]) return true;
+                             } else {
+                                  if (keys[k]) return true;
+                             }
+                        }
+
+
+
+
+                             // Apply a support ship's beam damage (weaker than player's beam)
+                             function supportApplyBeamDamage(sp) {
+                                  const beamRange = 520; // slightly shorter for supports
+                                  const beamWidth = 8;
+                                  const ca = Math.cos(sp.angle), sa = Math.sin(sp.angle);
+                                  const lvl = Math.max(1, ship.weapon.beamLevel || 1);
+                                  // damage asteroids along beam path (reduced power)
+                                  for (let i = asteroids.length - 1; i >= 0; i--) {
+                                       const a = asteroids[i];
+                                       const dx = a.x - sp.x, dy = a.y - sp.y;
+                                       const proj = dx * ca + dy * sa;
+                                       const perp = Math.abs(-dx * sa + dy * ca);
+                                       if (proj >= 0 && proj <= beamRange && perp <= a.r + beamWidth) {
+                                            const baseTick = (10 + Math.floor(ship.weapon.bulletDamage * 0.6)) * lvl;
+                                            const tickDamage = Math.max(1, Math.floor(baseTick * 0.55));
+                                            a.hp -= tickDamage;
+                                            explode(a.x, a.y, '#ffd89b', 4);
+                                            if (a.hp <= 0) destroyAsteroid(i, false);
+                                       }
+                                  }
+                                  // damage boss if hit by support beam
+                                  if (boss) {
+                                       const dx = boss.x - sp.x, dy = boss.y - sp.y;
+                                       const proj = dx * ca + dy * sa;
+                                       const perp = Math.abs(-dx * sa + dy * ca);
+                                       if (proj >= 0 && proj <= beamRange && perp <= boss.r + beamWidth) {
+                                            const bossTick = Math.max(6, Math.floor(20 * lvl * 0.45));
+                                            boss.hp -= bossTick;
+                                            explode(boss.x, boss.y, '#ffd89b', 6);
+                                            if (boss.hp <= 0) {
+                                                 explode(boss.x, boss.y, '#ff8c6b', 40);
+                                                 score += 500 + Math.round(boss.maxHp / 2);
+                                                 items.push({ x: boss.x, y: boss.y, type: 'beam', ttl: 12_000 });
+                                                 boss = null;
+                                                 bossTimer = 0;
+                                                 recordBossDefeat();
+                                            }
+                                       }
+                                  }
+                                  // damage wormhole if support beam intersects its center
+                                  if (wormhole) {
+                                       const dx = wormhole.x - sp.x, dy = wormhole.y - sp.y;
+                                       const proj = dx * ca + dy * sa;
+                                       const perp = Math.abs(-dx * sa + dy * ca);
+                                       if (proj >= 0 && proj <= beamRange && perp <= wormhole.r + beamWidth) {
+                                            const whTick = Math.max(8, Math.floor(40 * lvl * 0.45));
+                                            wormhole.hp -= whTick;
+                                            explode(wormhole.x, wormhole.y, '#8be1ff', 6);
+                                            if (wormhole.hp <= 0) {
+                                                 explode(wormhole.x, wormhole.y, '#8be1ff', 36);
+                                                 score += 1000 + Math.round(wormhole.maxHp / 2);
+                                                 items.push({ x: wormhole.x, y: wormhole.y, type: 'warp', ttl: 12_000 });
+                                                 wormhole = null;
+                                                 wormholeTimer = 0;
+                                                 wormholeWarning = null;
+                                                 wormholeDefeats++;
+                                                 meteorInterval = Math.max(1200, meteorInterval - 600);
+                                            }
+                                       }
+                                  }
+                             }
+                   }
+                   // gamepad mapping: handle movement (axes) and buttons
+                   if (action === 'moveUp') {
+                        // axis 1 is left stick Y; negative = up
+                        if ((gpState.axes[1] || 0) < -0.35) return true;
+                        if (gpState.buttons[12]) return true; // dpad up
+                   }
+                   if (action === 'moveDown') {
+                        if ((gpState.axes[1] || 0) > 0.35) return true;
+                        if (gpState.buttons[13]) return true;
+                   }
+                   if (action === 'moveLeft') {
+                        if ((gpState.axes[0] || 0) < -0.35) return true;
+                        if (gpState.buttons[14]) return true;
+                   }
+                   if (action === 'moveRight') {
+                        if ((gpState.axes[0] || 0) > 0.35) return true;
+                        if (gpState.buttons[15]) return true;
+                   }
+                   if (action === 'shoot') {
+                        // common: button 0 (X), button 7 (R2/RT)
+                        if (gpState.buttons[0] || gpState.buttons[7] || gpState.buttons[5]) return true;
+                   }
+                   if (action === 'warp') {
+                        // Circle (1) or button 2
+                        if (gpState.buttons[1] || gpState.buttons[2]) return true;
+                   }
+                   if (action === 'pause') {
+                        if (gpState.buttons[9]) return true; // Options (controller) - Triangle moved to Switch
+                   }
+                   if (action === 'shop') {
+                        if (gpState.buttons[8]) return true; // Share / touchpad sometimes
+                   }
+                   if (action === 'switch') {
+                        if (gpState.buttons[4] || gpState.buttons[6] || gpState.buttons[3]) return true; // L1 / L2 / Triangle
+                   }
+                   if (action === 'restart') {
+                        if (gpState.buttons[9] && gpState.buttons[0]) return true; // combo as fallback
+                   }
+                   return false;
+              }
+
+
+
+
+              // helper for displaying binding in HUD/canvas
+              function bindingLabel(action) {
+                   const b = bindings[action];
+                   if (!b) return '—';
+                   if (Array.isArray(b)) return b.map(x => x.indexOf('gpbtn') === 0 ? ('GP' + x.slice(5)) : x.toUpperCase()).join('/');
+                   return String(b).toUpperCase();
+              }
+
+
+
+
+              window.addEventListener('keydown', e => {
+                   const k = (e.key === ' ') ? 'space' : (e.key || '').toLowerCase();
+                   keys[k] = true;
+                   lastKeyDown = k;
+                   if (e.key === ' ') e.preventDefault();
+              });
+              window.addEventListener('keyup', e => {
+                   const k = (e.key === ' ') ? 'space' : (e.key || '').toLowerCase();
+                   keys[k] = false;
+              });
+
+
+
+
+              // Gamepad poll — keeps gpState up-to-date
+              function pollGamepads() {
+                   const g = navigator.getGamepads ? navigator.getGamepads() : [];
+                   if (g && g[0]) {
+                        const gp = g[0];
+                        gpState.axes = gp.axes.slice(0, 4);
+                        gpState.buttons = gp.buttons.map(b => (typeof b === 'object' ? (b.pressed || b.value > 0.4) : !!b));
+                   } else {
+                        gpState.axes = [];
+                        gpState.buttons = [];
+                   }
+                   requestAnimationFrame(pollGamepads);
+              }
+              pollGamepads();
+
+
+
+
+              // previous action states (for edge detection)
+              let prevAction = {};
+
+
+              // Weapon timing constants (used both by player and supports)
+              const BULLET_RELOAD = 8; // frames between bullet shots
+              const BEAM_COOLDOWN = 120; // frames between beam uses
+              const BEAM_ACTIVE_BASE = 30; // base beam active frames per beam level
+
+
+
+
+
+
+
+
+              // Game state
+              // wave counter (hidden gameplay wave variable)
+              let wave = 1;
+              let ship = {
+                   x: W / 2, y: H / 2, r: 12, vx: 0, vy: 0, accel: 0.45, drag: 0.92, maxSpeed: 6.8, reload: 0, angle: -Math.PI / 2, targetAngle: -Math.PI / 2, turnSpeed: 0.18, invuln: 0,
+                   shields: 0, maxShields: 3,
+                   weaponOwned: { beam: false, warp: false },
+                   weapon: { type: 'bullet', bulletDamage: 4, aoeRadius: 0, aoeDamage: 0, beamLevel: 1 },
+                     beamActive: 0, beamCooldown: 0, beamTick: 0, shieldFlash: 0,
+                     warpCooldown: 0, // ms cooldown for warp
+                     warpLevel: 0, // 0 = no warp, 1 = basic warp, 2+ = higher warp with AOE on impact
+                     justWarped: 0, // frames remaining where warp-impact AOE can trigger
+                     invincible: false
+              };
+              let shipLives = 3;
+              let bullets = [];
+              let asteroids = [];
+              let particles = [];
+              let items = []; // pickups dropped in world (e.g., beam, warp)
+              let score = 0;
+              let paused = false;
+              let gameOver = false;
+              let shopOpen = false;
+              const hud = document.getElementById('hud');
+
+
+
+
+
+
+
+
+              // Support ships (new feature)
+              let supports = []; // small allied ships that copy movement & fire with player
+
+
+              // Dev console state: activated by typing "unbound" while settings overlay is open (no textbox)
+              let devConsole = { enabled: false, buffer: '' };
+
+
+              function isDevTyping() {
+                   // true while user is typing the dev unlock word inside the settings overlay
+                   try {
+                        return paused && !overlaySettings.classList.contains('hidden') && !devConsole.enabled && (devConsole.buffer || '').length > 0;
+                   } catch (e) { return false; }
+              }
+
+
+
+
+
+
+
+
+              // Boss
+              let boss = null;
+              let bossTimer = 0; // ms since last boss/last reset
+              const bossInterval = 15_000; // reduced to 15s
+              let lastTime = performance.now();
+              let bossDefeats = 0; // track how many regular bosses defeated
+
+
+              function recordBossDefeat() {
+                   bossDefeats++;
+                   wave++;
+              }
+
+
+
+
+
+
+
+
+              // Wormhole (post-4-boss)
+              let wormhole = null;
+              let wormholeTimer = 0;
+              const wormholeInterval = 30_000; // spawn every 30s after threshold
+              const wormholePullRadius = 260;
+              // spawn warning
+              let wormholeWarning = null;
+              const wormholeWarnDuration = 3000; // ms before spawn to show warning
+              // track how many wormholes defeated to influence meteor spawn rate
+              let wormholeDefeats = 0;
+
+
+
+
+
+
+
+
+              // Meteors (post-4-boss hazard)
+              let meteorTimer = 0;
+              // initial meteor interval (ms) - will be adjusted by wormhole defeats
+              let meteorInterval = 5_000; // increased spawn rate (lower = more frequent)
+              let meteorWarnings = [];
+              let meteors = [];
+
+
+
+
+
+
+
+
+              // Highscore
+              let highscore = parseInt(localStorage.getItem('orbitHigh') || '0', 10);
+
+
+
+
+
+
+
+
+              function rand(min, max) { return Math.random() * (max - min) + min; }
+
+
+
+
+
+
+
+
+              function spawnAsteroid(level = 1) {
+                   // prevent heavy crowding: cap total asteroids based on score and small base cap
+                   const maxAsteroids = 8 + Math.floor(score / 150);
+                   if (asteroids.length >= maxAsteroids) return;
+
+
+
+
+
+
+
+
+                   const side = Math.floor(rand(0, 4));
+                   let x, y;
+                   if (side === 0) { x = -40; y = rand(-20, H + 20); }
+                   else if (side === 1) { x = W + 40; y = rand(-20, H + 20); }
+                   else if (side === 2) { x = rand(-20, W + 20); y = -40; }
+                   else { x = rand(-20, W + 20); y = H + 40; }
+                   // Asteroid sizing: during waves 1-4 asteroids scale up with level; from wave 5+ use normal sizes
+                   let size;
+                   if (wave >= 5) {
+                        // after passing wave 4, asteroid scaling resets to normal
+                        size = Math.round(rand(14, 48));
+                   } else {
+                        // waves 1-4: slightly larger asteroids based on level
+                        size = Math.round(rand(14, 48) * (1 + 0.08 * level));
+                   }
+                   const angle = Math.atan2(H / 2 - y, W / 2 - x) + rand(-0.8, 0.8);
+                   const speed = rand(0.35, 1.3) * (1 + 0.05 * level);
+                   // assign unique id to asteroid so supports can lock-on
+                   asteroids.push({ id: (window.__asteroidIdCounter = (window.__asteroidIdCounter || 1)), x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed, r: size, hp: Math.max(1, Math.floor(size / 18)) });
+                   window.__asteroidIdCounter++;
+              }
+
+
+
+
+
+
+
+
+              function spawnBoss() {
+                   // spawn above screen, large health scaled to score
+                   const hpBase = 220;
+                   const hp = hpBase + Math.floor(score * 0.6);
+                   boss = { x: W / 2, y: -120, vx: rand(-1.2, 1.2), vy: 1.1, r: 70, hp: hp, maxHp: hp };
+                   boss.beams = []; // will hold beam offsets
+                   boss.attackTimer = 0;
+                   boss.nextAttack = rand(1500, 3500); // ms until first beam attack
+                   boss.warn = 0;
+                   boss.active = 0;
+                   boss.baseSpin = rand(-0.0006, 0.0006); // reduced spin (won't exceed player handling)
+                   boss.baseAngle = 0; // shared rotation for all beam offsets
+                   // clear some small asteroids to reduce immediate danger
+                   asteroids = asteroids.filter(a => a.r > 26);
+                   explode(boss.x, boss.y, '#ff8c6b', 28);
+              }
+
+
+
+
+
+
+
+
+              function spawnWormhole() {
+                   // center spawn, large HP scaled to score, bossDefeats and player's weapon levels
+                   const baseHp = 600 + bossDefeats * 120 + Math.floor((ship.weapon.bulletDamage || 4) * 36) + Math.floor((ship.weapon.beamLevel || 1) * 100);
+                   // base pull value (small); each defeated wormhole increases pull slightly
+                   const basePull = 0.00035;
+                   // increase pull with defeats but cap when it would be stronger than player's movement
+                   const multiplier = 1 + (wormholeDefeats * 0.22);
+                   let pull = basePull * multiplier;
+                   // estimate max allowed pull so it doesn't exceed player's maxSpeed per frame
+                   // assume ~16ms frame for a rough cap: pull * 16 * 22 <= ship.maxSpeed
+                   const maxPull = ship.maxSpeed / (16 * 22);
+                   if (pull > maxPull) pull = maxPull;
+                   wormhole = { x: W / 2, y: H / 2, r: 64, coreR: 18, hp: baseHp, maxHp: baseHp, pull: pull, active: true, attractRadius: wormholePullRadius };
+                   wormholeWarning = null;
+                   explode(wormhole.x, wormhole.y, '#8be1ff', 36);
+              }
+
+
+
+
+
+
+
+
+              function restart() {
+                   ship = {
+                        x: W / 2, y: H / 2, r: 12, vx: 0, vy: 0, accel: 0.45, drag: 0.92, maxSpeed: 6.8, reload: 0, angle: -Math.PI / 2, targetAngle: -Math.PI / 2, turnSpeed: 0.18, invuln: 0,
+                        shields: 0, maxShields: 3,
+                        weaponOwned: { beam: false, warp: false },
+                       weapon: { type: 'bullet', bulletDamage: 4, aoeRadius: 0, aoeDamage: 0, beamLevel: 1 },
+                       beamActive: 0, beamCooldown: 0, beamTick: 0, shieldFlash: 0,
+                       warpCooldown: 0,
+                       warpLevel: 0,
+                       justWarped: 0,
+                       invincible: false
+                   };
+                   shipLives = 3;
+                   bullets = []; asteroids = []; particles = []; items = []; score = 0; gameOver = false; paused = false; shopOpen = false;
+                   boss = null; bossTimer = 0; bossDefeats = 0;
+                   wormhole = null; wormholeTimer = 0; wormholeWarning = null; wormholeDefeats = 0;
+                   meteorTimer = 0; meteorInterval = 5_000; meteorWarnings = []; meteors = [];
+                   supports = []; // reset supports
+                   for (let i = 0; i < 4; i++) spawnAsteroid();
+              }
+
+
+
+
+
+
+
+
+              function explode(x, y, color, amount = 18) {
+                   for (let i = 0; i < amount; i++) {
+                        const a = rand(0, Math.PI * 2);
+                        const s = rand(0.8, 3.6);
+                        particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: rand(40, 90), c: color, r: rand(1, 3) });
+                   }
+              }
+
+
+
+
+              // Warp impact AOE when ship warps into something while having warpLevel > 1
+              function warpImpactAOE(x, y, level) {
+                   const baseRadius = 24;
+                   const radius = baseRadius + (level - 1) * 12;
+                   const dmg = Math.max(2, Math.floor((ship.weapon.bulletDamage || 4) * 1.5 * level));
+                   explode(x, y, '#8be1ff', 26 + level * 6);
+                   // damage nearby asteroids
+                   for (let i = asteroids.length - 1; i >= 0; i--) {
+                        const a = asteroids[i];
+                        const d = Math.hypot(a.x - x, a.y - y);
+                        if (d <= radius + a.r) {
+                             a.hp -= dmg;
+                             if (a.hp <= 0) destroyAsteroid(i, false);
+                        }
+                   }
+                   // damage boss if present
+                   if (boss) {
+                        const d = Math.hypot(boss.x - x, boss.y - y);
+                        if (d <= radius + boss.r) {
+                             boss.hp -= dmg * 2;
+                             if (boss.hp <= 0) {
+                                  explode(boss.x, boss.y, '#ff8c6b', 40);
+                                  score += 500 + Math.round(boss.maxHp / 2);
+                                  items.push({ x: boss.x, y: boss.y, type: 'beam', ttl: 12_000 });
+                                       boss = null; bossTimer = 0; recordBossDefeat();
+                             }
+                        }
+                   }
+              }
+
+
+
+
+
+
+
+
+              function rectIntersect(a, b) {
+                   return !(a.x + a.r < b.x - b.r || a.x - a.r > b.x + b.r || a.y + a.r < b.y - b.r || a.y - a.r > b.y + b.r);
+              }
+
+
+
+
+
+
+
+
+              function lerpAngle(a, b, t) {
+                   let d = (b - a + Math.PI * 3) % (Math.PI * 2) - Math.PI;
+                   return a + d * t;
+              }
+
+
+
+
+
+
+
+
+              function shipHit() {
+                     if (ship.invincible) return;
+                     if (ship.invuln > 0 || gameOver) return;
+                   // shields block any damage and are destroyed on hit
+                   if (ship.shields > 0) {
+                        ship.shields = Math.max(0, ship.shields - 1);
+                        // stronger shield-block visual
+                        ship.shieldFlash = 22; // frames of flash
+                        // bright particle burst
+                        explode(ship.x, ship.y, '#a8faff', 26);
+                        ship.invuln = 90; // short invuln after shield block
+                        return;
+                   }
+
+
+
+
+
+
+
+
+                   shipLives--;
+                   explode(ship.x, ship.y, '#ff6b6b', 20);
+                   ship.invuln = 120; // frames of invulnerability
+
+
+
+
+
+
+
+
+                   if (shipLives <= 0) {
+                        gameOver = true;
+                        // save highscore
+                        if (score > highscore) { highscore = score; localStorage.setItem('orbitHigh', String(highscore)); }
+                   }
+              }
+
+
+
+
+
+
+
+
+              // destroy asteroid helper: byAOE prevents fragmentation
+              function destroyAsteroid(i, byAOE = false) {
+                   const a = asteroids[i];
+                   if (!a) return;
+                   score += Math.round(a.r);
+                   explode(a.x, a.y, '#ffd89b', 14);
+                   if (a.r > 20 && !byAOE) {
+                        const pieces = Math.min(3, Math.ceil(a.r / 18));
+                        for (let k = 0; k < pieces; k++) {
+                             const nr = a.r * rand(0.45, 0.7);
+                             asteroids.push({ x: a.x + rand(-6, 6), y: a.y + rand(-6, 6), vx: rand(-2, 2), vy: rand(-2, 2), r: nr, hp: Math.max(1, Math.floor(nr / 14)) });
+                        }
+                   }
+                   asteroids.splice(i, 1);
+              }
+
+
+
+
+
+
+
+
+              // Apply beam damage along ship angle when beam fires or ticks
+              function applyBeamDamage() {
+                   const beamRange = 600;
+                   const beamWidth = 10;
+                   const ca = Math.cos(ship.angle), sa = Math.sin(ship.angle);
+                   const lvl = Math.max(1, ship.weapon.beamLevel || 1);
+                   // damage asteroids along beam path
+                   for (let i = asteroids.length - 1; i >= 0; i--) {
+                        const a = asteroids[i];
+                        const dx = a.x - ship.x, dy = a.y - ship.y;
+                        const proj = dx * ca + dy * sa;
+                        const perp = Math.abs(-dx * sa + dy * ca);
+                        if (proj >= 0 && proj <= beamRange && perp <= a.r + beamWidth) {
+                             // apply tick damage scaled by beam level
+                             const tickDamage = (10 + Math.floor(ship.weapon.bulletDamage * 0.6)) * lvl;
+                             a.hp -= tickDamage;
+                             explode(a.x, a.y, '#ffb86b', 6);
+                             if (a.hp <= 0) {
+                                  destroyAsteroid(i, false);
+                             }
+                        }
+                   }
+                   // damage boss if hit by beam
+                   if (boss) {
+                        const dx = boss.x - ship.x, dy = boss.y - ship.y;
+                        const proj = dx * ca + dy * sa;
+                        const perp = Math.abs(-dx * sa + dy * ca);
+                        if (proj >= 0 && proj <= beamRange && perp <= boss.r + beamWidth) {
+                             const bossTick = 20 * lvl;
+                             boss.hp -= bossTick; // tick damage to boss scaled by level
+                             explode(boss.x, boss.y, '#ffd89b', 8);
+                             if (boss.hp <= 0) {
+                                  explode(boss.x, boss.y, '#ff8c6b', 40);
+                                  score += 500 + Math.round(boss.maxHp / 2);
+                                  items.push({ x: boss.x, y: boss.y, type: 'beam', ttl: 12_000 });
+                                  boss = null;
+                                  bossTimer = 0;
+                                  recordBossDefeat();
+                             }
+                        }
+                   }
+
+
+                   // If player just warped and hit the boss area with beam, apply warp AOE effect too
+                   if ((ship.justWarped || 0) > 0 && (ship.warpLevel || 0) > 1 && boss) {
+                        const d = Math.hypot(boss.x - ship.x, boss.y - ship.y);
+                        if (d <= 64 + boss.r) {
+                             warpImpactAOE(ship.x, ship.y, ship.warpLevel || 1);
+                        }
+                   }
+                   // damage wormhole if beam intersects its center
+                   if (wormhole) {
+                        const dx = wormhole.x - ship.x, dy = wormhole.y - ship.y;
+                        const proj = dx * ca + dy * sa;
+                        const perp = Math.abs(-dx * sa + dy * ca);
+                        if (proj >= 0 && proj <= beamRange && perp <= wormhole.r + beamWidth) {
+                             const whTick = 40 * lvl;
+                             wormhole.hp -= whTick;
+                             explode(wormhole.x, wormhole.y, '#8be1ff', 10);
+                             if (wormhole.hp <= 0) {
+                                  explode(wormhole.x, wormhole.y, '#8be1ff', 36);
+                                  score += 1000 + Math.round(wormhole.maxHp / 2);
+                                  // drop warp ability on defeat
+                                  items.push({ x: wormhole.x, y: wormhole.y, type: 'warp', ttl: 12_000 });
+                                  wormhole = null;
+                                  wormholeTimer = 0;
+                                  wormholeWarning = null;
+                                  // track defeats and increase meteor frequency
+                                  wormholeDefeats++;
+                                  meteorInterval = Math.max(1200, meteorInterval - 600);
+                             }
+                        }
+                   }
+              }
+
+
+
+
+
+
+
+
+              function step(dt) {
+                   // If any overlay is open (pause, shop, settings) or gameOver, do not advance boss/wormhole timers.
+                   // Still decrement per-entity short timers for responsive UI, but do not advance world timers.
+                   if (paused || gameOver || shopOpen || (typeof overlaySettings !== 'undefined' && !overlaySettings.classList.contains('hidden'))) {
+                        if (ship.reload > 0) ship.reload--;
+                        if (ship.invuln > 0) ship.invuln--;
+                        if (ship.justWarped > 0) ship.justWarped--;
+                        if (ship.beamActive > 0) ship.beamActive--;
+                        if (ship.beamTick > 0) ship.beamTick--;
+                        if (ship.beamCooldown > 0) ship.beamCooldown--;
+                        if (ship.shieldFlash > 0) ship.shieldFlash--;
+                        if (ship.warpCooldown > 0) ship.warpCooldown = Math.max(0, ship.warpCooldown - dt);
+                        // Do NOT advance bossTimer or wormholeTimer while overlays are present
+                        return;
+                   }
+                   // update boss timer (only spawn regular boss while wave <= 4)
+                   // Note: do NOT advance boss/wormhole timers while overlays are open (handled above)
+                   if (wave <= 4) bossTimer += dt;
+
+
+
+
+
+
+
+
+                   // Controls (keyboard or gamepad)
+                   let ax = 0, ay = 0;
+                   if (isActionActive('moveUp')) ay -= 1;
+                   if (isActionActive('moveDown')) ay += 1;
+                   if (isActionActive('moveLeft')) ax -= 1;
+                   if (isActionActive('moveRight')) ax += 1;
+                   const len = Math.hypot(ax, ay) || 1;
+
+
+
+
+
+
+
+
+                   if (ax !== 0 || ay !== 0) {
+                        const nx = ax / len, ny = ay / len;
+                        ship.targetAngle = Math.atan2(ny, nx);
+                        ship.vx += nx * ship.accel;
+                        ship.vy += ny * ship.accel;
+                        ship.vx *= ship.drag;
+                        ship.vy *= ship.drag;
+                   } else {
+                        ship.vx *= 0.78;
+                        ship.vy *= 0.78;
+                   }
+
+
+
+
+
+
+
+
+                   const spd = Math.hypot(ship.vx, ship.vy);
+                   if (spd > ship.maxSpeed) {
+                        const s = ship.maxSpeed / spd;
+                        ship.vx *= s;
+                        ship.vy *= s;
+                   }
+
+
+
+
+
+
+
+
+                   ship.angle = lerpAngle(ship.angle, ship.targetAngle, ship.turnSpeed);
+                   ship.x += ship.vx;
+                   ship.y += ship.vy;
+
+
+
+
+
+
+
+
+                   if (ship.x < ship.r) ship.x = ship.r, ship.vx *= -0.2;
+                   if (ship.x > W - ship.r) ship.x = W - ship.r, ship.vx *= -0.2;
+                   if (ship.y < ship.r) ship.y = ship.r, ship.vy *= -0.2;
+                   if (ship.y > H - ship.r) ship.y = H - ship.r, ship.vy *= -0.2;
+
+
+
+
+
+
+
+
+                   // Shooting (fires in facing direction; bullets inherit ship momentum)
+                   // Weapon: bullet or beam
+                   if (isActionActive('shoot')) {
+                        if (ship.weapon.type === 'bullet' && ship.reload <= 0) {
+                             const bulletSpeed = 6.5;
+                             const mx = ship.x + Math.cos(ship.angle) * (ship.r + 10);
+                             const my = ship.y + Math.sin(ship.angle) * (ship.r + 10);
+                             bullets.push({ x: mx, y: my, vx: Math.cos(ship.angle) * bulletSpeed + ship.vx, vy: Math.sin(ship.angle) * bulletSpeed + ship.vy, life: 80, damage: ship.weapon.bulletDamage });
+                             // Supports also fire when player fires (copy ability)
+                             for (const sp of supports) {
+                                  const sAngle = ship.angle; // follow player's facing
+                                  const spread = rand(-0.06, 0.06);
+                                  const smx = sp.x + Math.cos(sAngle) * (sp.r + 8);
+                                  const smy = sp.y + Math.sin(sAngle) * (sp.r + 8);
+                                  const sdmg = Math.max(1, Math.floor(ship.weapon.bulletDamage * 0.82));
+                                  bullets.push({ x: smx, y: smy, vx: Math.cos(sAngle + spread) * bulletSpeed + sp.vx, vy: Math.sin(sAngle + spread) * bulletSpeed + sp.vy, life: 80, damage: sdmg });
+                             }
+                             ship.reload = BULLET_RELOAD;
+                        } else if (ship.weapon.type === 'beam' && ship.beamCooldown <= 0 && ship.beamActive <= 0) {
+                             // activate beam (duration scales with beamLevel)
+                             const lvl = Math.max(1, ship.weapon.beamLevel || 1);
+                             ship.beamActive = BEAM_ACTIVE_BASE * lvl; // base frames * level
+                             ship.beamCooldown = BEAM_COOLDOWN; // cooldown frames between uses
+                             ship.beamTick = Math.max(4, 6 - (lvl - 1)); // higher level -> more frequent ticks
+                             // immediate beam damage application
+                             applyBeamDamage();
+                             // Supports: short copy pulse (they generate a burst of bullets along beam direction)
+                             for (const sp of supports) {
+                                  const sAngle = ship.angle;
+                                  const bulletSpeed = 5.5;
+                                  for (let k = 0; k < 3; k++) {
+                                       const off = (k - 1) * 0.06;
+                                       const smx = sp.x + Math.cos(sAngle) * (sp.r + 6);
+                                       const smy = sp.y + Math.sin(sAngle) * (sp.r + 6);
+                                       bullets.push({ x: smx, y: smy, vx: Math.cos(sAngle + off) * bulletSpeed + sp.vx, vy: Math.sin(sAngle + off) * bulletSpeed + sp.vy, life: 60, damage: Math.max(1, Math.floor((ship.weapon.bulletDamage * 0.6))) });
+                                  }
+                             }
+                        }
+                   }
+                   if (ship.reload > 0) ship.reload--;
+                   if (ship.invuln > 0) ship.invuln--;
+                   if (ship.justWarped > 0) ship.justWarped--;
+                   if (ship.beamActive > 0) {
+                        ship.beamActive--;
+                        ship.beamTick--;
+                        // periodic tick damage while beam active
+                        if (ship.beamTick <= 0) {
+                             applyBeamDamage();
+                             ship.beamTick = Math.max(4, 6 - ((ship.weapon.beamLevel || 1) - 1));
+                        }
+                   }
+                   if (ship.beamCooldown > 0) ship.beamCooldown--;
+                   if (ship.warpCooldown > 0) ship.warpCooldown = Math.max(0, ship.warpCooldown - dt);
+
+
+
+
+
+
+
+
+                   // Warp (dash) input (keyboard or controller) - edge triggered
+                   if (isActionActive('warp') && !prevAction['warp']) {
+                        if (ship.weaponOwned.warp && ship.warpCooldown <= 0) {
+                             // Teleport (warp) forward instead of dash; grant 0.5s invincibility
+                             const teleportDist = 180; // increased range teleport
+                             const nx = Math.cos(ship.angle), ny = Math.sin(ship.angle);
+                             ship.x += nx * teleportDist;
+                             ship.y += ny * teleportDist;
+                             // clamp to bounds
+                             if (ship.x < ship.r) ship.x = ship.r;
+                             if (ship.x > W - ship.r) ship.x = W - ship.r;
+                             if (ship.y < ship.r) ship.y = ship.r;
+                             if (ship.y > H - ship.r) ship.y = H - ship.r;
+                             // small particle burst and short invuln
+                             explode(ship.x + nx * (ship.r + 8), ship.y + ny * (ship.r + 8), '#8be1ff', 18);
+                             ship.warpCooldown = 900; // ms cooldown
+                             // grant 0.5s invincibility (invuln interpreted in frames elsewhere)
+                             ship.invuln = Math.max(ship.invuln, 30);
+                             // mark justWarped frames so AOE on contact can trigger for higher warp levels
+                             ship.justWarped = Math.max(ship.justWarped, 18);
+                             // Supports also teleport to formation positions relative to new ship pos
+                             for (const sp of supports) {
+                                  // compute formation offset similar to later update target
+                                  // small random offset to avoid stacking exactly
+                                  sp.x += nx * teleportDist * 0.98 + rand(-6, 6);
+                                  sp.y += ny * teleportDist * 0.98 + rand(-6, 6);
+                                  sp.invuln = 30;
+                                  explode(sp.x, sp.y, '#8be1ff', 8);
+                             }
+                             // no manual key consume; use edge detection to avoid repeat
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // Update bullets
+                   for (let i = bullets.length - 1; i >= 0; i--) {
+                        const b = bullets[i];
+                        b.x += b.vx; b.y += b.vy; b.life--;
+                        // if wormhole exists and bullet enters pull radius, apply pull (stronger for bullets)
+                        if (wormhole) {
+                             const dx = wormhole.x - b.x, dy = wormhole.y - b.y;
+                             const dist = Math.hypot(dx, dy);
+                             if (dist < wormhole.attractRadius) {
+                                  // bullets are pulled more strongly to make wormhole interaction meaningful
+                                  const pull = wormhole.pull * dt * 1.2;
+                                  // higher multiplier for bullets
+                                  const bulletMultiplier = 90;
+                                  b.vx += (dx / (dist || 1)) * pull * bulletMultiplier;
+                                  b.vy += (dy / (dist || 1)) * pull * bulletMultiplier;
+                             }
+                             // if within core radius, damage wormhole and remove bullet
+                             if (dist <= wormhole.coreR + 6) {
+                                  wormhole.hp -= (b.damage || 1) * 1.25;
+                                  explode(b.x, b.y, '#ffd89b', 6);
+                                  bullets.splice(i, 1);
+                                  if (wormhole.hp <= 0) {
+                                       explode(wormhole.x, wormhole.y, '#8be1ff', 36);
+                                       score += 1000 + Math.round(wormhole.maxHp / 2);
+                                       // drop warp ability on defeat
+                                       items.push({ x: wormhole.x, y: wormhole.y, type: 'warp', ttl: 12_000 });
+                                       wormhole = null;
+                                       wormholeTimer = 0;
+                                       wormholeWarning = null;
+                                       // record wormhole defeat to increase meteor frequency
+                                       wormholeDefeats++;
+                                       // slightly reduce the next meteor interval base immediately
+                                       meteorInterval = Math.max(1200, meteorInterval - 600);
+                                  }
+                                  continue;
+                             }
+                        }
+                        if (b.y < -20 || b.y > H + 20 || b.x < -20 || b.x > W + 20 || b.life <= 0) bullets.splice(i, 1);
+                   }
+
+
+
+
+
+
+
+
+                   // Boss logic
+                        // spawn regular boss only while waves 1-4
+                        if (!boss && wave <= 4 && bossTimer >= bossInterval) {
+                        // pause asteroid spawning and spawn boss
+                        spawnBoss();
+                        bossTimer = 0;
+                   }
+
+
+
+
+
+
+
+
+                   if (boss) {
+                        boss.x += boss.vx;
+                        boss.y += boss.vy;
+                        // simple bounds bounce
+                        if (boss.x < boss.r) { boss.x = boss.r; boss.vx *= -1; }
+                        if (boss.x > W - boss.r) { boss.x = W - boss.r; boss.vx *= -1; }
+                        if (boss.y < boss.r) { boss.y = boss.r; boss.vy = Math.abs(boss.vy); }
+                        if (boss.y > H - boss.r) { boss.y = H - boss.r; boss.vy *= -1; }
+
+
+
+
+
+
+
+
+                        // boss vs bullets
+                        for (let j = bullets.length - 1; j >= 0; j--) {
+                             const b = bullets[j];
+                             if (Math.hypot(boss.x - b.x, boss.y - b.y) < boss.r + 6) {
+                                  bullets.splice(j, 1);
+                                  // damage scaled from weapon
+                                  boss.hp -= b.damage;
+                                  explode(b.x, b.y, '#ffd89b', 6);
+                                  if (boss.hp <= 0) {
+                                       explode(boss.x, boss.y, '#ff8c6b', 40);
+                                       score += 500 + Math.round(boss.maxHp / 2);
+                                       // boss drops: chance to drop beam weapon
+                                       items.push({ x: boss.x, y: boss.y, type: 'beam', ttl: 12_000 });
+                                       boss = null;
+                                       bossTimer = 0;
+                                       recordBossDefeat();
+                                       break;
+                                  }
+                             }
+                        }
+
+
+
+
+
+
+
+
+                        // if boss died during bullet loop, skip further boss processing to avoid null access
+                        if (!boss) {
+                             // clear any lingering beams handled by boss removal
+                        } else {
+                             // boss beam attack system
+                             boss.attackTimer += dt;
+                             // spawn only when there are no active beams (ensures cooldown between full sequences)
+                             if (boss.attackTimer >= boss.nextAttack && boss.beams.length === 0) {
+                                  // spawn a set of spinning beams with brief warnings — synchronized
+                                  const beamCount = 5;
+                                  boss.beams = [];
+                                  // boss.baseSpin is already set in spawnBoss (kept slow)
+                                  const warn = 650 + Math.floor(rand(0, 400));
+                                  const active = 1200 + Math.floor(rand(-300, 400));
+                                  boss.warn = warn;
+                                  boss.active = active;
+                                  for (let i = 0; i < beamCount; i++) {
+                                       const offset = (i / beamCount) * Math.PI * 2 + rand(-0.08, 0.08);
+                                       boss.beams.push({
+                                            offset, // relative to boss.baseAngle
+                                            timer: 0,
+                                            width: 10 + rand(-3, 3),
+                                            length: Math.max(W, H) * 1.2,
+                                            state: 'warn' // warn -> active -> done
+                                       });
+                                  }
+                                  boss.attackTimer = 0;
+                                  boss.nextAttack = rand(1800, 3600);
+                             }
+
+
+
+
+
+
+
+
+                             // update beams (synchronized timings)
+                             if (boss.beams.length > 0) {
+                                  // rotate the shared base angle slowly
+                                  boss.baseAngle += boss.baseSpin * dt;
+
+
+
+
+
+
+
+
+                                  // increment timers for each beam and compute current angle from shared base
+                                  for (let i = boss.beams.length - 1; i >= 0; i--) {
+                                       const bm = boss.beams[i];
+                                       bm.timer += dt;
+                                       const angle = boss.baseAngle + bm.offset;
+
+
+
+
+
+
+
+
+                                       if (bm.state === 'warn' && bm.timer >= boss.warn) {
+                                            bm.state = 'active';
+                                            bm.timer = 0;
+                                       } else if (bm.state === 'active' && bm.timer >= boss.active) {
+                                            bm.state = 'done';
+                                       }
+
+
+
+
+
+
+
+
+                                       if (bm.state === 'done') {
+                                            boss.beams.splice(i, 1);
+                                       } else if (bm.state === 'active') {
+                                            // beam collision with ship
+                                            const ca = Math.cos(angle), sa = Math.sin(angle);
+                                            const dx = ship.x - boss.x, dy = ship.y - boss.y;
+                                            const proj = dx * ca + dy * sa; // distance along beam
+                                            const perp = Math.abs(-dx * sa + dy * ca); // perpendicular distance
+                                            if (proj >= 0 && proj <= bm.length && perp <= bm.width + ship.r) {
+                                                 shipHit();
+                                            }
+                                       }
+                                  }
+                             }
+
+
+
+
+
+
+
+
+                             // boss vs ship (collision with body)
+                             if (Math.hypot(boss.x - ship.x, boss.y - ship.y) < boss.r + ship.r) {
+                                  // If the player just warped and has warpLevel > 1, trigger warp AOE against boss
+                                  if ((ship.justWarped || 0) > 0 && (ship.warpLevel || 0) > 1) {
+                                       warpImpactAOE(ship.x, ship.y, ship.warpLevel || 1);
+                                  }
+                                  // inflict hit
+                                  shipHit();
+                             }
+                        }
+                   }
+
+
+
+
+
+
+
+
+
+
+                   // Update asteroids
+                   for (let i = asteroids.length - 1; i >= 0; i--) {
+                        const a = asteroids[i];
+                        a.x += a.vx; a.y += a.vy;
+                        // wormhole pulls asteroids inward slightly when present
+                        if (wormhole) {
+                             const dx = wormhole.x - a.x, dy = wormhole.y - a.y;
+                             const dist = Math.hypot(dx, dy);
+                             if (dist < wormhole.attractRadius) {
+                                  const pull = wormhole.pull * dt * 0.5;
+                                  a.vx += (dx / (dist || 1)) * pull * 20;
+                                  a.vy += (dy / (dist || 1)) * pull * 20;
+                             }
+                        }
+                        if (a.x < -80 || a.x > W + 80 || a.y < -80 || a.y > H + 80) {
+                             asteroids.splice(i, 1);
+                             continue;
+                        }
+
+
+
+
+
+
+
+
+                        // collisions bullets -> asteroids
+                        let collidedByBullet = false;
+                        for (let j = bullets.length - 1; j >= 0; j--) {
+                             const b = bullets[j];
+                             if (Math.hypot(a.x - b.x, a.y - b.y) < a.r + 3) {
+                                  bullets.splice(j, 1);
+                                  a.hp -= b.damage;
+                                  explode(b.x, b.y, '#ffd89b', 6);
+
+
+
+
+
+
+
+
+                                  if (a.hp <= 0) {
+                                       destroyAsteroid(i, false);
+                                  }
+                                  collidedByBullet = true;
+                                  break;
+                             }
+                        }
+
+
+
+
+
+
+
+
+                        // collision with ship
+                        if (Math.hypot(a.x - ship.x, a.y - ship.y) < a.r + ship.r) {
+                            // If the player just warped and has warpLevel > 1, create an AOE impact
+                            if ((ship.justWarped || 0) > 0 && (ship.warpLevel || 0) > 1) {
+                                 const lvl = ship.warpLevel || 1;
+                                 warpImpactAOE(ship.x, ship.y, lvl);
+                            }
+                            // remove the asteroid and damage the player (instead of immediate game over)
+                            asteroids.splice(i, 1);
+                            shipHit();
+                            continue;
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // spawn new asteroids gradually only if no boss/wormhole active
+                   if (!boss && !wormhole) {
+                        // reduced base spawn chance to avoid crowding
+                        const spawnChance = 0.008 + Math.min(0.04, score / 2500);
+                        if (Math.random() < spawnChance) spawnAsteroid(Math.floor(score / 200) + 1);
+                   }
+
+
+
+
+
+
+
+
+                   // Update particles
+                   for (let i = particles.length - 1; i >= 0; i--) {
+                        const p = particles[i];
+                        p.x += p.vx; p.y += p.vy;
+                        p.vx *= 0.98; p.vy *= 0.98;
+                        p.life--;
+                        if (p.life <= 0) particles.splice(i, 1);
+                   }
+
+
+
+
+
+
+
+
+                   // Update items (pickups)
+                   for (let i = items.length - 1; i >= 0; i--) {
+                        const it = items[i];
+                        it.ttl -= dt;
+                        if (it.ttl <= 0) {
+                             items.splice(i, 1);
+                             continue;
+                        }
+                        // simple gentle float
+                        it.y += Math.sin((Date.now() / 600) + i) * 0.02;
+
+
+
+
+
+
+
+
+                        if (Math.hypot(it.x - ship.x, it.y - ship.y) < 18 + ship.r) {
+                             // pickup
+                             if (it.type === 'beam') {
+                                  if (ship.weaponOwned.beam) {
+                                       // already have beam -> strengthen it (longer duration, more damage)
+                                       ship.weapon.beamLevel = Math.min(3, (ship.weapon.beamLevel || 1) + 1);
+                                       // visual feedback
+                                       explode(it.x, it.y, '#ffd89b', 18);
+                                       // increase beam effectiveness
+                                       ship.weapon.bulletDamage += 1;
+                                  } else {
+                                       ship.weaponOwned.beam = true;
+                                       ship.weapon.type = 'beam';
+                                       ship.weapon.beamLevel = ship.weapon.beamLevel || 1;
+                                       // small pickup burst
+                                       explode(it.x, it.y, '#ffd89b', 12);
+                                  }
+                             } else if (it.type === 'warp') {
+                                  // grant warp ability
+                                  ship.weaponOwned.warp = true;
+                                  ship.warpCooldown = 0;
+                                  explode(it.x, it.y, '#8be1ff', 18);
+                             }
+                             items.splice(i, 1);
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // Wormhole logic (enabled once player progresses past wave 4)
+                   if (wave >= 5) {
+                        wormholeTimer += dt;
+
+
+
+
+
+
+
+
+                        // schedule a warning a few seconds before actual spawn
+                        if (!wormhole && !wormholeWarning && wormholeTimer >= Math.max(0, wormholeInterval - wormholeWarnDuration)) {
+                             wormholeWarning = { timer: 0, warnTime: wormholeWarnDuration };
+                        }
+                        if (wormholeWarning) {
+                             wormholeWarning.timer += dt;
+                        }
+
+
+
+
+
+
+
+
+                        // spawn wormhole periodically (warning precedes this)
+                              if (!wormhole && wormholeTimer >= wormholeInterval) {
+                             spawnWormhole();
+                             wormholeTimer = 0;
+                             wormholeWarning = null;
+                        }
+
+
+
+
+
+
+
+
+                        // meteor hazard management (randomized)
+                        meteorTimer += dt;
+                        if (meteorTimer >= meteorInterval) {
+                             meteorTimer = 0;
+                             // adapt spawn rate based on how many wormholes defeated (more defeats -> faster spawns)
+                             const minBase = Math.max(1200, 3500 - wormholeDefeats * 350);
+                             const randBase = Math.max(800, 3500 - wormholeDefeats * 250);
+                             meteorInterval = minBase + Math.floor(rand(0, randBase));
+                             // schedule a warning then meteor
+                             const side = Math.floor(rand(0, 4));
+                             const warn = { side, timer: 0, warnTime: 700 + Math.floor(rand(0, 600)) };
+                             meteorWarnings.push(warn);
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // Update meteor warnings & spawn meteors
+                   for (let i = meteorWarnings.length - 1; i >= 0; i--) {
+                        const w = meteorWarnings[i];
+                        w.timer += dt;
+                        if (w.timer >= w.warnTime) {
+                             // spawn meteor
+                             let mx, my, vx, vy;
+                             const speed = 10 + rand(0, 6);
+                             if (w.side === 0) { mx = -30; my = rand(0, H); vx = speed; vy = rand(-2, 2); }
+                             else if (w.side === 1) { mx = W + 30; my = rand(0, H); vx = -speed; vy = rand(-2, 2); }
+                             else if (w.side === 2) { mx = rand(0, W); my = -30; vx = rand(-2, 2); vy = speed; }
+                             else { mx = rand(0, W); my = H + 30; vx = rand(-2, 2); vy = -speed; }
+                             meteors.push({ x: mx, y: my, vx, vy, r: 12 + rand(6, 22) });
+                             meteorWarnings.splice(i, 1);
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // Update meteors
+                   for (let i = meteors.length - 1; i >= 0; i--) {
+                        const m = meteors[i];
+                        m.x += m.vx; m.y += m.vy;
+                        // collision with ship
+                        if (Math.hypot(m.x - ship.x, m.y - ship.y) < m.r + ship.r) {
+                             meteors.splice(i, 1);
+                             shipHit();
+                             continue;
+                        }
+                        // collision with asteroids - asteroids can be destroyed by meteors but meteors remain (meteors are immune)
+                        for (let j = asteroids.length - 1; j >= 0; j--) {
+                             const a = asteroids[j];
+                             if (Math.hypot(m.x - a.x, m.y - a.y) < m.r + a.r) {
+                                  explode(a.x, a.y, '#ffd89b', 10);
+                                  asteroids.splice(j, 1);
+                                  // do NOT remove the meteor; meteors are immune to damage
+                                  break;
+                             }
+                        }
+                        if (m.x < -120 || m.x > W + 120 || m.y < -120 || m.y > H + 120) meteors.splice(i, 1);
+                   }
+
+
+
+
+
+
+
+
+                   // Wormhole pull effects on ship
+                   if (wormhole) {
+                        const dx = wormhole.x - ship.x, dy = wormhole.y - ship.y;
+                        const dist = Math.hypot(dx, dy);
+                        if (dist > 0) {
+                             // reduced pull so player can escape more easily
+                             const pullFactor = wormhole.pull * dt * (1 + (wormhole.attractRadius - Math.min(dist, wormhole.attractRadius)) / wormhole.attractRadius);
+                             ship.vx += (dx / dist) * pullFactor * 22; // slightly toned down multiplier
+                             ship.vy += (dy / dist) * pullFactor * 22;
+                        }
+                        // if player touches core, game over
+                        if (dist <= wormhole.coreR + ship.r * 0.6) {
+                             gameOver = true;
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // Update support ships (follow player, mimic firing/warp). They now auto-fire and aim
+                   if (supports.length > 0) {
+                        for (let i = supports.length - 1; i >= 0; i--) {
+                             const sp = supports[i];
+                             // formation behind the player: compute ranked offset
+                             const rank = Math.ceil((i + 1) / 2);
+                             const sideSign = (i % 2 === 0) ? -1 : 1;
+                             const behindDist = 40 + (rank - 1) * 22;
+                             const lateral = 18 + (rank - 1) * 8;
+                             const perpX = Math.cos(ship.angle + Math.PI / 2), perpY = Math.sin(ship.angle + Math.PI / 2);
+                             const tx = ship.x - Math.cos(ship.angle) * behindDist + perpX * sideSign * lateral;
+                             const ty = ship.y - Math.sin(ship.angle) * behindDist + perpY * sideSign * lateral;
+                             // smooth follow
+                             sp.x += (tx - sp.x) * 0.18;
+                             sp.y += (ty - sp.y) * 0.18;
+                             sp.angle = lerpAngle(sp.angle, ship.angle, 0.14);
+                             // small velocity mimic for scrolling effects
+                             sp.vx += (ship.vx - sp.vx) * 0.06;
+                             sp.vy += (ship.vy - sp.vy) * 0.06;
+                             // invuln decay if any
+                             if (sp.invuln > 0) sp.invuln--;
+
+
+                             // decrement support timers (reloads are frame-based like player's)
+                             sp.reload = Math.max(0, (sp.reload || 0) - 1);
+                             sp.beamCooldown = Math.max(0, (sp.beamCooldown || 0) - 1);
+                             if (sp.beamActive > 0) {
+                                  sp.beamActive--;
+                                  sp.beamTick--;
+                                  if (sp.beamTick <= 0) {
+                                      /* support beams disabled */
+                                       sp.beamTick = Math.max(4, 6 - ((ship.weapon.beamLevel || 1) - 1));
+                                  }
+                             }
+
+
+                             // choose a target: prefer boss, then wormhole, otherwise persist a locked-on asteroid by id
+                             let target = null;
+                             // if boss exists, always prioritize it and set targetId to 'boss'
+                             if (boss) {
+                                  sp.targetId = 'boss';
+                                  target = boss;
+                             } else if (wormhole) {
+                                  // if a wormhole (post-wave boss) exists, target it
+                                  sp.targetId = 'wormhole';
+                                  target = wormhole;
+                             } else {
+                                  // if we have a persisted targetId, try to resolve it to an existing asteroid
+                                  if (sp.targetId && sp.targetId !== 'boss') {
+                                       const a = asteroids.find(x => x.id === sp.targetId);
+                                       if (a) {
+                                            target = a;
+                                       } else {
+                                            // previously locked target no longer exists — clear it so we pick a new one
+                                            sp.targetId = null;
+                                       }
+                                  }
+                                  // if no valid persisted target, pick nearest asteroid and lock onto it
+                                  if (!target) {
+                                       let minD = Infinity;
+                                       for (const a of asteroids) {
+                                            const d = Math.hypot(a.x - sp.x, a.y - sp.y);
+                                            if (d < minD) { minD = d; target = a; }
+                                       }
+                                       if (target && target.id) sp.targetId = target.id;
+                                  }
+                             }
+
+
+                             // compute aim angle toward chosen target (or follow player's facing if none)
+                                  const aimAngle = target ? Math.atan2(target.y - sp.y, target.x - sp.x) : ship.angle;
+                                  // faster turning so supports face targets reliably
+                                  sp.angle = lerpAngle(sp.angle, aimAngle, 0.6);
+
+
+                                  // If about to fire (reload ready), snap to target angle to avoid shooting slightly off
+                                  const willFireNow = ((sp.reload || 0) <= 0 && target);
+                                  if (willFireNow && target) sp.angle = aimAngle;
+
+
+                             // Auto-fire: supports always use primary (bullet) attack at the same interval
+                             if (willFireNow && target) {
+                                  const bulletSpeed = 6.5;
+                                  // ensure angle is aimed at target before firing to avoid lateral shots
+                                  const fireAngle = Math.atan2(target.y - sp.y, target.x - sp.x);
+                                  sp.angle = fireAngle;
+                                  const smx = sp.x + Math.cos(fireAngle) * (sp.r + 8);
+                                  const smy = sp.y + Math.sin(fireAngle) * (sp.r + 8);
+                                  const sdmg = Math.max(1, Math.floor(ship.weapon.bulletDamage * 0.82));
+                                  bullets.push({ x: smx, y: smy, vx: Math.cos(fireAngle) * bulletSpeed + sp.vx, vy: Math.sin(fireAngle) * bulletSpeed + sp.vy, life: 80, damage: sdmg });
+                                  sp.reload = BULLET_RELOAD;
+                             }
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // update HUD (include boss spawn timer when no boss active) and BeamLevel + Warp status
+                   let nextBossSecs = '—';
+                   if (bossDefeats < 4) {
+                        nextBossSecs = boss ? '—' : Math.max(0, (bossInterval - bossTimer) / 1000).toFixed(1);
+                   }
+                   const beamLv = (ship.weapon.beamLevel || 1);
+                   const warpStatus = ship.weaponOwned.warp ? (ship.warpCooldown > 0 ? ('CD ' + (ship.warpCooldown / 1000).toFixed(1) + 's') : 'Ready') : '—';
+                   const warpLv = ship.warpLevel || 0;
+
+
+
+
+
+
+
+
+                   // wormhole incoming / next timer
+                   let nextWormholeText = '';
+                   if (bossDefeats >= 4) {
+                        if (wormhole) nextWormholeText = 'Active';
+                        else if (wormholeWarning) {
+                             // show incoming countdown while warning active
+                             const remain = Math.max(0, (wormholeWarning.warnTime - wormholeWarning.timer) / 1000).toFixed(1);
+                             nextWormholeText = 'Incoming: ' + remain + 's';
+                        } else {
+                             nextWormholeText = Math.max(0, (wormholeInterval - wormholeTimer) / 1000).toFixed(1) + 's';
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // organize HUD into multiple small lines to avoid overlap
+                   hud.textContent = 'Score: ' + score + '  ·  High: ' + highscore + '\n' +
+                        'Lives: ' + shipLives + '  ·  Shields: ' + ship.shields + '/' + ship.maxShields + '\n' +
+                        'Weapon: ' + ship.weapon.type + (ship.weapon.type === 'bullet' ? ' (DMG:' + ship.weapon.bulletDamage + ', AOE:' + ship.weapon.aoeRadius + ')' : (ship.beamCooldown > 0 ? ' (beam CD)' : '')) +
+                        '  ·  BeamLv: ' + beamLv + '  ·  Warp: ' + warpStatus + '\n' +
+                        '  ·  WarpLv: ' + warpLv + '\n' +
+                        'Supports: ' + supports.length + '\n' +
+                        (bossDefeats < 4 ? ('Next Boss: ' + nextBossSecs + 's\n') : '') +
+                        (bossDefeats >= 4 ? ('Next Wormhole: ' + nextWormholeText + (wormholeDefeats ? ('  ·  WH defeats: ' + wormholeDefeats) : '')) : '');
+                   // update previous action states (edge detection for actions like warp)
+                   prevAction['warp'] = isActionActive('warp');
+                   prevAction['shoot'] = isActionActive('shoot');
+              }
+
+
+
+
+
+
+
+
+              function draw() {
+                   // background gradient
+                   const g = ctx.createLinearGradient(0, 0, 0, H);
+                   g.addColorStop(0, '#051223'); g.addColorStop(1, '#030616');
+                   ctx.fillStyle = g;
+                   ctx.fillRect(0, 0, W, H);
+
+
+
+
+
+
+
+
+                   // stars
+                   ctx.fillStyle = '#0a2540';
+                   for (let i = 0; i < 60; i++) {
+                        const sx = (i * 37 + (Date.now() / 50) % W) % W;
+                        const sy = (i * 21 + (Date.now() / 70) % H) % H;
+                        ctx.fillRect(sx, sy, 1, 1);
+                   }
+
+
+
+
+
+
+
+
+                   // draw asteroids
+                   for (const a of asteroids) {
+                        ctx.save();
+                        ctx.translate(a.x, a.y);
+                        ctx.rotate((a.x + a.y + Date.now() / 50) * 0.001);
+                        ctx.fillStyle = '#9aa1a6';
+                        ctx.beginPath();
+                        const spikes = Math.max(6, Math.floor(a.r / 5));
+                        for (let i = 0; i < spikes; i++) {
+                             const ang = (i / spikes) * Math.PI * 2;
+                             const rr = a.r * (0.75 + Math.sin(i * 2.1 + Date.now() / 200) * 0.18 + rand(-0.02, 0.02));
+                             ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   // bullets
+                   for (const b of bullets) {
+                        ctx.fillStyle = '#ffd89b';
+                        ctx.beginPath();
+                        ctx.arc(b.x, b.y, 2.6, 0, Math.PI * 2);
+                        ctx.fill();
+                   }
+
+
+
+
+
+
+
+
+                   // boss beams (draw behind boss)
+                   if (boss && boss.beams) {
+                        for (const bm of boss.beams) {
+                             const angle = boss.baseAngle + bm.offset;
+                             const ca = Math.cos(angle), sa = Math.sin(angle);
+                             const ex = boss.x + ca * bm.length;
+                             const ey = boss.y + sa * bm.length;
+                             if (bm.state === 'warn') {
+                                  // thin warning line + pulsing ring near boss
+                                  ctx.strokeStyle = 'rgba(255,220,140,0.45)';
+                                  ctx.lineWidth = 2;
+                                  ctx.beginPath();
+                                  ctx.moveTo(boss.x + ca * 22, boss.y + sa * 22);
+                                  ctx.lineTo(boss.x + ca * (bm.length * 0.9), boss.y + sa * (bm.length * 0.9));
+                                  ctx.stroke();
+                                  // warning pulse
+                                  const pulse = 0.6 + 0.4 * Math.sin(Date.now() / 120);
+                                  ctx.fillStyle = 'rgba(255,120,80,' + (0.06 * pulse) + ')';
+                                  ctx.beginPath();
+                                  ctx.arc(boss.x, boss.y, 38 + pulse * 8, 0, Math.PI * 2);
+                                  ctx.fill();
+                             } else if (bm.state === 'active') {
+                                  // thick, bright beam
+                                  ctx.strokeStyle = '#ffb86b';
+                                  ctx.lineCap = 'butt';
+                                  ctx.lineWidth = bm.width * 2.2;
+                                  ctx.globalCompositeOperation = 'lighter';
+                                  ctx.beginPath();
+                                  ctx.moveTo(boss.x, boss.y);
+                                  ctx.lineTo(ex, ey);
+                                  ctx.stroke();
+                                  // brighter core
+                                  ctx.strokeStyle = '#ffd89b';
+                                  ctx.lineWidth = bm.width;
+                                  ctx.beginPath();
+                                  ctx.moveTo(boss.x, boss.y);
+                                  ctx.lineTo(ex, ey);
+                                  ctx.stroke();
+                                  ctx.globalCompositeOperation = 'source-over';
+                                  ctx.lineWidth = 1;
+                             }
+                        }
+                   }
+
+
+
+
+
+
+
+
+                   // boss draw and HP bar
+                   if (boss) {
+                        ctx.save();
+                        ctx.translate(boss.x, boss.y);
+                        ctx.rotate((Date.now() / 200) * 0.001);
+                        ctx.fillStyle = '#ff8c6b';
+                        ctx.beginPath();
+                        const spikes = 14;
+                        for (let i = 0; i < spikes; i++) {
+                             const ang = (i / spikes) * Math.PI * 2;
+                             const rr = boss.r * (0.85 + Math.sin(i * 1.9 + Date.now() / 300) * 0.06);
+                             ctx.lineTo(Math.cos(ang) * rr, Math.sin(ang) * rr);
+                        }
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+
+
+
+
+
+
+
+
+                        // boss health bar
+                        const barW = 420, barH = 14;
+                        const bx = W / 2 - barW / 2, by = 16;
+                        ctx.fillStyle = 'rgba(2,6,10,0.7)';
+                        ctx.fillRect(bx - 4, by - 6, barW + 8, barH + 12);
+                        ctx.fillStyle = '#cfe8ff';
+                        ctx.fillRect(bx, by, barW, barH);
+                        ctx.fillStyle = '#ff6b6b';
+                        const hpPct = Math.max(0, boss.hp / boss.maxHp);
+                        ctx.fillRect(bx, by, Math.floor(barW * hpPct), barH);
+                        ctx.strokeStyle = '#083b52';
+                        ctx.strokeRect(bx, by, barW, barH);
+                   }
+
+
+
+
+
+
+
+
+                   // Wormhole draw (post-4-boss)
+                   if (wormhole) {
+                        // outer glow
+                        const t = Date.now() / 300;
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'lighter';
+                        for (let i = 0; i < 4; i++) {
+                             ctx.fillStyle = 'rgba(139,225,255,' + (0.06 + i * 0.03) + ')';
+                             ctx.beginPath();
+                             ctx.arc(wormhole.x, wormhole.y, wormhole.r + i * 14 + Math.sin(t + i) * 6, 0, Math.PI * 2);
+                             ctx.fill();
+                        }
+                        ctx.restore();
+                        // core
+                        ctx.save();
+                        ctx.translate(wormhole.x, wormhole.y);
+                        ctx.rotate(Date.now() / 500 % (Math.PI * 2));
+                        ctx.fillStyle = '#0b2a3a';
+                        ctx.beginPath();
+                        ctx.arc(0, 0, wormhole.coreR, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                        // HP bar small
+                        ctx.fillStyle = 'rgba(2,6,10,0.7)';
+                        ctx.fillRect(wormhole.x - 62, wormhole.y - wormhole.r - 18, 124, 10);
+                        ctx.fillStyle = '#8be1ff';
+                        ctx.fillRect(wormhole.x - 60, wormhole.y - wormhole.r - 16, Math.max(0, Math.floor(120 * (wormhole.hp / wormhole.maxHp))), 6);
+                        ctx.strokeStyle = '#052027';
+                        ctx.strokeRect(wormhole.x - 62, wormhole.y - wormhole.r - 18, 124, 10);
+                   }
+
+
+
+
+
+
+
+
+                   // wormhole spawn warning visualization
+                   if (wormholeWarning) {
+                        const t = (wormholeWarning.warnTime > 0) ? (1 - Math.max(0, wormholeWarning.timer) / wormholeWarning.warnTime) : 0;
+                        const pulse = 0.35 + 0.65 * Math.sin(Date.now() / 200);
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'lighter';
+                        ctx.fillStyle = 'rgba(139,225,255,' + (0.08 * pulse * (1 - t)) + ')';
+                        ctx.beginPath();
+                        ctx.arc(W / 2, H / 2, 24 + (1 - t) * 160, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+
+
+
+
+
+
+
+
+                        ctx.save();
+                        ctx.strokeStyle = 'rgba(139,225,255,0.9)';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(W / 2, H / 2, 24 + (1 - t) * 110, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+
+
+
+
+
+
+
+
+
+
+                        // small label near warning
+                        ctx.save();
+                        ctx.fillStyle = '#cfe8ff';
+                        ctx.font = '12px system-ui';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('WORMHOLE INCOMING', W / 2, H / 2 - (24 + (1 - t) * 120) - 8);
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   // ship (simple triangle)
+                   // draw shield ring if any shields present
+                   if (ship.shields > 0) {
+                        ctx.save();
+                        ctx.translate(ship.x, ship.y);
+                        const t = Date.now() / 180;
+                        const pulse = 0.5 + 0.5 * Math.sin(t * 2 + ship.shieldFlash * 0.3);
+                        ctx.strokeStyle = 'rgba(168,250,255,' + (0.14 + 0.12 * pulse) + ')';
+                        ctx.lineWidth = 4 + 2 * pulse;
+                        ctx.beginPath();
+                        ctx.arc(0, 0, ship.r + 12 + 2 * pulse, 0, Math.PI * 2);
+                        ctx.stroke();
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   ctx.save();
+                   ctx.translate(ship.x, ship.y);
+                   ctx.rotate(ship.angle + Math.PI / 2);
+                   // invuln blink
+                   if (ship.invuln > 0 && Math.floor(ship.invuln / 6) % 2 === 0) {
+                        ctx.globalAlpha = 0.35;
+                   }
+                   // glow
+                   ctx.fillStyle = 'rgba(120,190,255,0.08)';
+                   ctx.beginPath(); ctx.arc(0, 0, 28, 0, Math.PI * 2); ctx.fill();
+                   // body
+                   ctx.fillStyle = '#9fe0ff';
+                   ctx.beginPath();
+                   ctx.moveTo(0, -14);
+                   ctx.lineTo(10, 10);
+                   ctx.lineTo(-10, 10);
+                   ctx.closePath();
+                   ctx.fill();
+                   // cockpit
+                   ctx.fillStyle = '#083b52';
+                   ctx.beginPath(); ctx.ellipse(0, -3, 5, 4, 0, 0, Math.PI * 2); ctx.fill();
+                   ctx.globalAlpha = 1;
+                   ctx.restore();
+
+
+
+
+
+
+
+
+                   // draw support ships
+                   for (const sp of supports) {
+                        ctx.save();
+                        ctx.translate(sp.x, sp.y);
+                        ctx.rotate(sp.angle + Math.PI / 2);
+                        // smaller size
+                        ctx.globalAlpha = (sp.invuln > 0 && Math.floor(sp.invuln / 6) % 2 === 0) ? 0.35 : 1;
+                        ctx.scale(0.65, 0.65);
+                        ctx.fillStyle = '#bfe7ff';
+                        ctx.beginPath();
+                        ctx.moveTo(0, -10);
+                        ctx.lineTo(7, 8);
+                        ctx.lineTo(-7, 8);
+                        ctx.closePath();
+                        ctx.fill();
+                        ctx.restore();
+
+
+                        // draw locked-target marker/line if target exists
+                        try {
+                             if (sp.targetId) {
+                                  let t = null;
+                                  if (sp.targetId === 'boss') t = boss;
+                                  else if (sp.targetId === 'wormhole') t = wormhole;
+                                  else t = asteroids.find(x => x.id === sp.targetId);
+                                  if (t) {
+                                       // line from support to target
+                                       ctx.save();
+                                       ctx.strokeStyle = 'rgba(200,240,255,0.35)';
+                                       ctx.lineWidth = 1.5;
+                                       ctx.beginPath();
+                                       ctx.moveTo(sp.x, sp.y);
+                                       ctx.lineTo(t.x, t.y);
+                                       ctx.stroke();
+                                       ctx.restore();
+                                       // small ring at target
+                                       ctx.save();
+                                       ctx.strokeStyle = 'rgba(140,220,255,0.9)';
+                                       ctx.lineWidth = 2;
+                                       ctx.beginPath();
+                                       ctx.arc(t.x, t.y, Math.max(6, Math.min(18, (t.r || 10) + 6)), 0, Math.PI * 2);
+                                       ctx.stroke();
+                                       ctx.restore();
+                                  }
+                             }
+                        } catch (err) { /* defensive */ }
+                   }
+
+
+
+
+
+
+
+
+                   // shield-block flash overlay (stronger when shield just blocked)
+                   if (ship.shieldFlash > 0) {
+                        const a = Math.min(1, ship.shieldFlash / 22);
+                        ctx.save();
+                        ctx.globalCompositeOperation = 'lighter';
+                        ctx.fillStyle = 'rgba(168,250,255,' + (0.18 * a) + ')';
+                        ctx.beginPath(); ctx.arc(ship.x, ship.y, 36 + (8 * a), 0, Math.PI * 2); ctx.fill();
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   // draw beam when active (player)
+                   if (ship.beamActive > 0 && ship.weapon.type === 'beam') {
+                        const ca = Math.cos(ship.angle), sa = Math.sin(ship.angle);
+                        const ex = ship.x + ca * 600;
+                        const ey = ship.y + sa * 600;
+                        ctx.strokeStyle = 'rgba(255,216,155,0.95)';
+                        ctx.lineWidth = 10;
+                        ctx.globalCompositeOperation = 'lighter';
+                        ctx.beginPath();
+                        ctx.moveTo(ship.x, ship.y);
+                        ctx.lineTo(ex, ey);
+                        ctx.stroke();
+                        ctx.lineWidth = 4;
+                        ctx.strokeStyle = 'rgba(255,184,107,0.95)';
+                        ctx.beginPath();
+                        ctx.moveTo(ship.x, ship.y);
+                        ctx.lineTo(ex, ey);
+                        ctx.stroke();
+                        ctx.globalCompositeOperation = 'source-over';
+                        ctx.lineWidth = 1;
+                   }
+
+
+
+
+
+
+
+
+                   // draw items (pickups)
+                   for (const it of items) {
+                        ctx.save();
+                        ctx.translate(it.x, it.y);
+                        if (it.type === 'beam') {
+                             ctx.fillStyle = '#ffd89b';
+                             ctx.beginPath();
+                             ctx.arc(0, 0, 12, 0, Math.PI * 2);
+                             ctx.fill();
+                             ctx.fillStyle = '#083b52';
+                             ctx.font = '11px system-ui';
+                             ctx.textAlign = 'center';
+                             ctx.fillText('BEAM', 0, 4);
+                        } else if (it.type === 'warp') {
+                             ctx.fillStyle = '#8be1ff';
+                             ctx.beginPath();
+                             ctx.arc(0, 0, 12, 0, Math.PI * 2);
+                             ctx.fill();
+                             ctx.fillStyle = '#052027';
+                             ctx.font = '11px system-ui';
+                             ctx.textAlign = 'center';
+                             ctx.fillText('WARP', 0, 4);
+                        }
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   // draw meteor warnings
+                   for (const w of meteorWarnings) {
+                        ctx.save();
+                        ctx.fillStyle = 'rgba(255,100,60,0.12)';
+                        if (w.side === 0) {
+                             ctx.fillRect(0, 0, 80, H);
+                        } else if (w.side === 1) {
+                             ctx.fillRect(W - 80, 0, 80, H);
+                        } else if (w.side === 2) {
+                             ctx.fillRect(0, 0, W, 80);
+                        } else {
+                             ctx.fillRect(0, H - 80, W, 80);
+                        }
+                        ctx.fillStyle = 'rgba(255,140,80,0.9)';
+                        ctx.font = '14px system-ui';
+                        ctx.textAlign = 'center';
+                        if (w.side === 0) ctx.fillText('⚠ METEOR', 40, H / 2);
+                        else if (w.side === 1) ctx.fillText('⚠ METEOR', W - 40, H / 2);
+                        else if (w.side === 2) ctx.fillText('⚠ METEOR', W / 2, 40);
+                        else ctx.fillText('⚠ METEOR', W / 2, H - 40);
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   // draw meteors
+                   for (const m of meteors) {
+                        ctx.save();
+                        ctx.translate(m.x, m.y);
+                        ctx.rotate(Math.atan2(m.vy, m.vx));
+                        ctx.fillStyle = '#ffb86b';
+                        ctx.beginPath();
+                        ctx.ellipse(0, 0, m.r, m.r * 0.6, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.restore();
+                   }
+
+
+
+
+
+
+
+
+                   // particles
+                   for (const p of particles) {
+                        ctx.fillStyle = p.c;
+                        ctx.globalAlpha = Math.max(0, Math.min(1, p.life / 90));
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.globalAlpha = 1;
+                   }
+
+
+
+
+
+
+
+
+                   // HUD messages
+                   if (gameOver) {
+                        ctx.fillStyle = 'rgba(2,6,10,0.6)';
+                        ctx.fillRect(W / 2 - 210, H / 2 - 60, 420, 120);
+                        ctx.fillStyle = '#ffd89b';
+                        ctx.font = '36px system-ui, -apple-system, "Segoe UI"';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Game Over', W / 2, H / 2 - 6);
+                        ctx.fillStyle = '#cfe8ff';
+                        ctx.font = '18px system-ui';
+                        ctx.fillText('Press R to restart', W / 2, H / 2 + 28);
+                        ctx.fillText('Final Score: ' + score + ' · High: ' + highscore, W / 2, H / 2 + 56);
+                   }
+                   if (paused && !gameOver && !shopOpen) {
+                        ctx.fillStyle = 'rgba(2,6,10,0.5)';
+                        ctx.fillRect(W / 2 - 220, H / 2 - 80, 440, 160);
+                        ctx.fillStyle = '#ffd89b';
+                        ctx.font = '24px system-ui';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Paused', W / 2, H / 2 - 36);
+
+
+
+
+
+
+
+
+                        ctx.fillStyle = '#cfe8ff';
+                        ctx.font = '14px system-ui';
+                        ctx.textAlign = 'left';
+                        const left = W / 2 - 200;
+                        // Show keybinds while paused so player can access controls
+                        ctx.fillText('Movement: ' + bindingLabel('moveLeft') + ' / ' + bindingLabel('moveRight') + ' / ' + bindingLabel('moveUp') + ' / ' + bindingLabel('moveDown'), left, H / 2 - 2);
+                        ctx.fillText('Shoot: ' + bindingLabel('shoot') + '    Switch: ' + bindingLabel('switch') + '    Warp: ' + bindingLabel('warp') + ' (if owned)', left, H / 2 + 20);
+                        ctx.fillText('Shop: ' + bindingLabel('shop') + '    Pause: ' + bindingLabel('pause') + '    Restart: ' + bindingLabel('restart') + '    Settings: ' + bindingLabel('settings'), left, H / 2 + 42);
+
+
+                   }
+
+
+
+
+
+
+
+
+                   // Shop overlay
+                   if (shopOpen) {
+                        ctx.fillStyle = 'rgba(1,4,8,0.9)';
+                        ctx.fillRect(W / 2 - 260, H / 2 - 160, 520, 320);
+                        ctx.fillStyle = '#ffd89b';
+                        ctx.font = '26px system-ui';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Shop', W / 2, H / 2 - 120);
+                        ctx.fillStyle = '#cfe8ff';
+                        ctx.font = '16px system-ui';
+                        ctx.textAlign = 'left';
+                        const left = W / 2 - 220;
+                        ctx.fillText('1) Shield (blocks one hit) — Cost: 150 — Owned: ' + ship.shields + '/' + ship.maxShields, left, H / 2 - 70);
+                        ctx.fillText('2) Weapon Upgrade (increase bullet DMG and AOE) — Cost: 220', left, H / 2 - 30);
+                        const supportCost = 10000 * (supports.length + 1);
+                        ctx.fillText('3) Support Ship — Cost: ' + supportCost + ' (adds a small ally that copies movement & firing)', left, H / 2 + 6);
+                        ctx.fillText('Press 1, 2 or 3 to buy. Press B to close.', left, H / 2 + 46);
+                        ctx.fillStyle = '#ffd89b';
+                        ctx.fillText('Score: ' + score, left, H / 2 + 96);
+                   }
+              }
+
+
+
+
+
+
+
+
+              // input: pause/restart/shop/switch weapon/buy (uses bindings)
+              window.addEventListener('keydown', e => {
+                   const k = (e.key === ' ') ? 'space' : (e.key || '').toLowerCase();
+                   // If the settings overlay is visible and we're not actively rebinding, block all overlay-opening keybinds
+                   try {
+                        if (typeof overlaySettings !== 'undefined' && !overlaySettings.classList.contains('hidden') && !awaitingRebind) {
+                             if (isKeyBoundToAction(k, 'shop') || isKeyBoundToAction(k, 'settings') || isKeyBoundToAction(k, 'restart') || isKeyBoundToAction(k, 'switch') || isKeyBoundToAction(k, 'pause')) {
+                                  return;
+                             }
+                        }
+                   } catch (err) { /* ignore */ }
+                   // pause
+                   if (isKeyBoundToAction(k, 'pause')) { paused = !paused; }
+                   // restart (only when paused or after game over)
+                   if (isKeyBoundToAction(k, 'restart') && (gameOver || paused)) { restart(); }
+                   // shop toggle
+                   if (isKeyBoundToAction(k, 'shop')) {
+                        shopOpen = !shopOpen;
+                        paused = shopOpen;
+                   }
+                   // weapon switch
+                   if (isKeyBoundToAction(k, 'switch')) {
+                        if (ship.weaponOwned.beam) { ship.weapon.type = (ship.weapon.type === 'bullet') ? 'beam' : 'bullet'; }
+                   }
+                   // shop purchases when open (keep numeric keys)
+                   if (shopOpen && !gameOver) {
+                        if (k === '1') {
+                             const cost = 150;
+                             if (score >= cost && ship.shields < ship.maxShields) { score -= cost; ship.shields = Math.min(ship.maxShields, ship.shields + 1); }
+                        } else if (k === '2') {
+                             const cost = 220;
+                             if (score >= cost) {
+                                  score -= cost;
+                                  // apply diminishing returns and caps to avoid runaway damage
+                                  const MAX_BULLET_DMG = 72;
+                                  const MAX_AOE = 180;
+                                  // damage increment reduces as damage approaches max
+                                  const dmgInc = Math.max(1, Math.ceil(2 * (1 - (ship.weapon.bulletDamage / MAX_BULLET_DMG))));
+                                  ship.weapon.bulletDamage = Math.min(MAX_BULLET_DMG, ship.weapon.bulletDamage + dmgInc);
+                                  // AOE growth reduces as it approaches MAX_AOE
+                                  const aoeInc = Math.max(6, Math.ceil(18 * (1 - (ship.weapon.aoeRadius / MAX_AOE))));
+                                  ship.weapon.aoeRadius = Math.min(MAX_AOE, ship.weapon.aoeRadius + aoeInc);
+                                  ship.weapon.aoeDamage = Math.max(1, Math.floor(ship.weapon.bulletDamage * 0.8));
+                             }
+                        } else if (k === '3') {
+                             // Buy a support ship. Cost scales with current number of supports.
+                             const cost = 10000 * (supports.length + 1);
+                             if (score >= cost) {
+                                  score -= cost;
+                                  const s = { x: ship.x + rand(-24, 24), y: ship.y + rand(-24, 24), vx: 0, vy: 0, angle: ship.angle, r: 8, invuln: 0,
+                                       reload: 0, beamCooldown: 0, beamActive: 0, beamTick: 0, targetId: null };
+                                  supports.push(s);
+                                  explode(s.x, s.y, '#bfe7ff', 12);
+                             }
+                        }
+                   }
+              });
+
+
+
+
+
+
+
+
+              // main loop
+              function loop(ts) {
+                   const dt = Math.min(50, ts - lastTime); // clamp large gaps
+                   lastTime = ts;
+                   step(dt);
+                   draw();
+                   requestAnimationFrame(loop);
+              }
+
+
+
+
+
+
+
+
+              // start game helper (only called after user confirms instructions)
+              function startGame() {
+                   for (let i = 0; i < 5; i++) spawnAsteroid();
+                   lastTime = performance.now();
+                   loop(lastTime);
+              }
+
+
+
+
+
+
+
+
+              // small responsive scaling
+              function fitCanvas() {
+                   const scale = Math.min((window.innerWidth - 20) / W, (window.innerHeight - 20) / H);
+                   canvas.style.width = Math.floor(W * scale) + 'px';
+                   canvas.style.height = Math.floor(H * scale) + 'px';
+              }
+              window.addEventListener('resize', fitCanvas);
+              fitCanvas();
+
+
+
+
+              // Overlay UI wiring: home, instructions, settings
+              const overlayHome = document.getElementById('overlay-home');
+              const overlayInstr = document.getElementById('overlay-instructions');
+              const overlaySettings = document.getElementById('overlay-settings');
+              const btnStart = document.getElementById('btn-start');
+              const btnShowInstr = document.getElementById('btn-show-instructions');
+              const btnInstrOk = document.getElementById('btn-instr-ok');
+              const btnSettingsClose = document.getElementById('btn-settings-close');
+              const settingsList = document.getElementById('settings-list');
+
+
+
+
+              btnStart.addEventListener('click', () => {
+                   overlayHome.classList.add('hidden');
+                   overlayInstr.classList.remove('hidden');
+              });
+              btnShowInstr.addEventListener('click', () => { overlayHome.classList.add('hidden'); overlayInstr.classList.remove('hidden'); });
+              btnInstrOk.addEventListener('click', () => { overlayInstr.classList.add('hidden'); startGame(); });
+
+
+
+
+              // populate settings list
+              const ACTIONS = ['moveUp', 'moveDown', 'moveLeft', 'moveRight', 'shoot', 'warp', 'pause', 'shop', 'restart', 'switch', 'settings'];
+              let awaitingRebind = null;
+
+
+
+
+              function humanize(a) {
+                   const map = { moveUp: 'Move Up', moveDown: 'Move Down', moveLeft: 'Move Left', moveRight: 'Move Right', shoot: 'Shoot', warp: 'Warp', pause: 'Pause', shop: 'Shop', restart: 'Restart', switch: 'Switch Weapon', settings: 'Open Keybinds' };
+                   return map[a] || a;
+              }
+
+
+
+
+              function displayBindingName(b) {
+                   if (!b) return '—';
+                   if (Array.isArray(b)) {
+                        return b.map(x => x.indexOf('gpbtn') === 0 ? ('GP Btn ' + x.slice(5)) : x.toUpperCase()).join(', ');
+                   }
+                   return String(b).toUpperCase();
+              }
+
+
+
+
+              function populateSettingsList() {
+                   settingsList.innerHTML = '';
+                   for (const a of ACTIONS) {
+                        const row = document.createElement('div'); row.className = 'binding-row';
+                        const label = document.createElement('div'); label.textContent = humanize(a);
+                        const keyEl = document.createElement('div'); keyEl.className = 'key'; keyEl.textContent = displayBindingName(bindings[a]);
+                        keyEl.addEventListener('click', () => startRebind(a, keyEl));
+                        row.appendChild(label); row.appendChild(keyEl);
+                        settingsList.appendChild(row);
+                   }
+
+
+                   // If dev console unlocked, append developer controls
+                   if (devConsole.enabled) {
+                        const sep = document.createElement('div'); sep.style.height = '8px'; settingsList.appendChild(sep);
+
+
+                        // Score editor row
+                        const scoreRow = document.createElement('div'); scoreRow.className = 'binding-row';
+                        const scoreLabel = document.createElement('div'); scoreLabel.textContent = 'Dev: Score';
+                        const scoreControls = document.createElement('div'); scoreControls.className = 'key';
+                        scoreControls.style.display = 'flex'; scoreControls.style.justifyContent = 'center'; scoreControls.style.gap = '6px';
+                        const plusBtn = document.createElement('button'); plusBtn.className = 'btn'; plusBtn.textContent = '+1000'; plusBtn.addEventListener('click', () => { score += 1000; populateSettingsList(); });
+                        const minusBtn = document.createElement('button'); minusBtn.className = 'btn'; minusBtn.textContent = '-1000'; minusBtn.addEventListener('click', () => { score = Math.max(0, score - 1000); populateSettingsList(); });
+                        const setBtn = document.createElement('button'); setBtn.className = 'btn secondary'; setBtn.textContent = 'Set...'; setBtn.addEventListener('click', () => {
+                             const v = parseInt(prompt('Set score to:' , String(score)), 10);
+                             if (!Number.isNaN(v)) { score = Math.max(0, v); populateSettingsList(); }
+                        });
+                        scoreControls.appendChild(plusBtn); scoreControls.appendChild(minusBtn); scoreControls.appendChild(setBtn);
+                        scoreRow.appendChild(scoreLabel); scoreRow.appendChild(scoreControls); settingsList.appendChild(scoreRow);
+
+
+                        // Invincibility toggle
+                        const invRow = document.createElement('div'); invRow.className = 'binding-row';
+                        const invLabel = document.createElement('div'); invLabel.textContent = 'Dev: Invincibility';
+                        const invBtnWrap = document.createElement('div'); invBtnWrap.className = 'key';
+                        const invBtn = document.createElement('button'); invBtn.className = 'btn'; invBtn.textContent = ship.invincible ? 'ON' : 'OFF';
+                        invBtn.addEventListener('click', () => { ship.invincible = !ship.invincible; populateSettingsList(); });
+                        invBtnWrap.appendChild(invBtn); invRow.appendChild(invLabel); invRow.appendChild(invBtnWrap); settingsList.appendChild(invRow);
+
+
+                        // Unlock boss drop abilities
+                        const unlockRow = document.createElement('div'); unlockRow.className = 'binding-row';
+                        const unlockLabel = document.createElement('div'); unlockLabel.textContent = 'Dev: Unlock Drops';
+                        const unlockWrap = document.createElement('div'); unlockWrap.className = 'key';
+                        const unlockBtn = document.createElement('button'); unlockBtn.className = 'btn'; unlockBtn.textContent = 'Unlock Beam & Warp';
+                        unlockBtn.addEventListener('click', () => { ship.weaponOwned.beam = true; ship.weaponOwned.warp = true; ship.weapon.beamLevel = ship.weapon.beamLevel || 1; ship.warpLevel = Math.max(1, ship.warpLevel || 1); populateSettingsList(); });
+                        unlockWrap.appendChild(unlockBtn); unlockRow.appendChild(unlockLabel); unlockRow.appendChild(unlockWrap); settingsList.appendChild(unlockRow);
+
+
+                        // Beam level editor
+                        const bRow = document.createElement('div'); bRow.className = 'binding-row';
+                        const bLabel = document.createElement('div'); bLabel.textContent = 'Dev: Beam Level';
+                        const bWrap = document.createElement('div'); bWrap.className = 'key';
+                        const bMinus = document.createElement('button'); bMinus.className = 'btn'; bMinus.textContent = '-'; bMinus.addEventListener('click', () => { ship.weapon.beamLevel = Math.max(1, (ship.weapon.beamLevel || 1) - 1); populateSettingsList(); });
+                        const bVal = document.createElement('div'); bVal.style.minWidth = '46px'; bVal.style.textAlign = 'center'; bVal.textContent = String(ship.weapon.beamLevel || 1);
+                        const bPlus = document.createElement('button'); bPlus.className = 'btn'; bPlus.textContent = '+'; bPlus.addEventListener('click', () => { ship.weapon.beamLevel = Math.min(3, (ship.weapon.beamLevel || 1) + 1); populateSettingsList(); });
+                        const bSet = document.createElement('button'); bSet.className = 'btn secondary'; bSet.textContent = 'Set'; bSet.addEventListener('click', () => { const v = parseInt(prompt('Beam level (1-3):', String(ship.weapon.beamLevel || 1)), 10); if (!Number.isNaN(v)) { ship.weapon.beamLevel = Math.min(3, Math.max(1, v)); populateSettingsList(); } });
+                        bWrap.appendChild(bMinus); bWrap.appendChild(bVal); bWrap.appendChild(bPlus); bWrap.appendChild(bSet);
+                        bRow.appendChild(bLabel); bRow.appendChild(bWrap); settingsList.appendChild(bRow);
+
+
+                             // Wave select editor
+                             const wRow = document.createElement('div'); wRow.className = 'binding-row';
+                             const wLabel = document.createElement('div'); wLabel.textContent = 'Dev: Wave';
+                             const wWrap = document.createElement('div'); wWrap.className = 'key';
+                             const wMinus = document.createElement('button'); wMinus.className = 'btn'; wMinus.textContent = '-'; wMinus.addEventListener('click', () => { wave = Math.max(1, (wave || 1) - 1); populateSettingsList(); });
+                             const wVal = document.createElement('div'); wVal.style.minWidth = '46px'; wVal.style.textAlign = 'center'; wVal.textContent = String(wave || 1);
+                             const wPlus = document.createElement('button'); wPlus.className = 'btn'; wPlus.textContent = '+'; wPlus.addEventListener('click', () => { wave = Math.min(999, (wave || 1) + 1); populateSettingsList(); });
+                             const wSet = document.createElement('button'); wSet.className = 'btn secondary'; wSet.textContent = 'Set'; wSet.addEventListener('click', () => { const v = parseInt(prompt('Set wave (1-999):', String(wave || 1)), 10); if (!Number.isNaN(v)) { wave = Math.max(1, Math.min(999, v)); populateSettingsList(); } });
+                             wWrap.appendChild(wMinus); wWrap.appendChild(wVal); wWrap.appendChild(wPlus); wWrap.appendChild(wSet);
+                             wRow.appendChild(wLabel); wRow.appendChild(wWrap); settingsList.appendChild(wRow);
+
+
+                             // Credits row
+                             const credRow = document.createElement('div'); credRow.className = 'binding-row';
+                             const credLabel = document.createElement('div'); credLabel.textContent = 'Dev: Credits';
+                             const credWrap = document.createElement('div'); credWrap.className = 'key';
+                             const credText = document.createElement('div'); credText.style.textAlign = 'center'; credText.style.minWidth = '110px'; credText.textContent = 'Copilot';
+                             credWrap.appendChild(credText); credRow.appendChild(credLabel); credRow.appendChild(credWrap); settingsList.appendChild(credRow);
+
+
+                        // Close dev console
+                        const closeRow = document.createElement('div'); closeRow.className = 'binding-row';
+                        const closeLabel = document.createElement('div'); closeLabel.textContent = 'Dev Console';
+                        const closeWrap = document.createElement('div'); closeWrap.className = 'key';
+                        const closeBtn = document.createElement('button'); closeBtn.className = 'btn secondary'; closeBtn.textContent = 'Close Dev Console'; closeBtn.addEventListener('click', () => { devConsole.enabled = false; devConsole.buffer = ''; populateSettingsList(); });
+                        closeWrap.appendChild(closeBtn); closeRow.appendChild(closeLabel); closeRow.appendChild(closeWrap); settingsList.appendChild(closeRow);
+                   }
+              }
+
+
+
+
+              function startRebind(action, displayEl) {
+                   awaitingRebind = { action, displayEl };
+                   displayEl.textContent = 'Press key or controller...';
+
+
+
+
+                   // key listener (once)
+                   const keyHandler = (e) => {
+                        const k = (e.key === ' ') ? 'space' : (e.key || '').toLowerCase();
+                        bindings[action] = [k]; saveBindings(); populateSettingsList(); awaitingRebind = null;
+                   };
+                   window.addEventListener('keydown', keyHandler, { once: true });
+
+
+
+
+                   // poll gamepad briefly to detect button press
+                   let lastFound = -1;
+                   const gpPoll = setInterval(() => {
+                        for (let i = 0; i < (gpState.buttons.length || 0); i++) {
+                             if (gpState.buttons[i]) { lastFound = i; break; }
+                        }
+                        if (lastFound >= 0) { bindings[action] = ['gpbtn' + lastFound]; saveBindings(); populateSettingsList(); awaitingRebind = null; clearInterval(gpPoll); }
+                   }, 120);
+
+
+
+
+                   // stop after 6s
+                   setTimeout(() => { if (awaitingRebind && awaitingRebind.action === action) { awaitingRebind = null; populateSettingsList(); clearInterval(gpPoll); } }, 6000);
+              }
+
+
+
+
+              btnSettingsClose.addEventListener('click', () => { overlaySettings.classList.add('hidden'); });
+
+
+
+
+              // open settings when binding pressed while paused
+              window.addEventListener('keydown', e => {
+                   const k = (e.key === ' ') ? 'space' : (e.key || '').toLowerCase();
+                   if (isDevTyping()) return; // block opening settings while typing dev code
+                   if (paused && isKeyBoundToAction(k, 'settings')) {
+                        overlaySettings.classList.remove('hidden');
+                        populateSettingsList();
+                   }
+              });
+
+
+              // Dev console code entry: while paused and settings overlay open, type the word 'unbound' (no textbox required)
+              window.addEventListener('keydown', e => {
+                   try {
+                        if (!paused) return;
+                        if (overlaySettings.classList.contains('hidden')) return;
+                        if (awaitingRebind) return; // don't interfere with rebind flow
+                        const k = (e.key || '').toLowerCase();
+                        if (!k || k.length !== 1 || k < 'a' || k > 'z') {
+                             if (k === 'backspace') {
+                                  devConsole.buffer = devConsole.buffer.slice(0, -1);
+                             }
+                             return;
+                        }
+                        devConsole.buffer += k;
+                        // keep buffer short
+                        if (devConsole.buffer.length > 20) devConsole.buffer = devConsole.buffer.slice(-20);
+                        if (devConsole.buffer.endsWith('unbound')) {
+                             devConsole.enabled = true;
+                             devConsole.buffer = '';
+                             populateSettingsList();
+                             // small visual cue: briefly flash the settings box border
+                             const box = overlaySettings.querySelector('.box');
+                             if (box) {
+                                  box.style.borderColor = '#40e0ff';
+                                  setTimeout(() => { box.style.borderColor = ''; }, 800);
+                             }
+                        }
+                   } catch (err) { /* swallow */ }
+              });
+         })();
+    </script>
+</body>
+
+
+</html>
